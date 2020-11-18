@@ -1,0 +1,218 @@
+---
+title: "Inference"
+author: "ALMIGHTxxx"
+date: "29/10/2020"
+output: html_document
+---
+
+STATISTICAL INFERENCE ASSIGNMENT
+===================================
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading dependencies that will be required
+```{r}
+library(dplyr)
+library(ggplot2)
+library(statsr)
+```
+
+# DATA:
+The data we will work with is provided by the GSS,The GSS gathers data on contemporary American society in order to monitor and explain trends and constants in attitudes, behaviors, and attributes.  Hundreds of trends have been tracked since 1972. In addition, since the GSS adopted questions from earlier surveys, trends can be followed for up to 80 years.
+
+
+## Data collection methods
+Data collection process
+
+Face-to-face interviews are used by the team at National Opinion Research Center (NORC) - hosted at the University of Chicago to collect data. Adults living in the United States are the target group/ study population from which a random sample is drawn using an area probability design that randomly selects respondents in households across the United States. The GSS sample is a heterogenous mix of rural, urban and semi-urban people. Participation in the study is strictly voluntary.
+
+The survey has been conducted annually from 1972 to 1994 (except in 1979, 1981, and 1992). Since 1994, it has been conducted every other year. The survey takes about 90 minutes to administer. As of 2014, 30 national samples with 59,599 respondents and 5,900+ variables have been collected.
+
+## Generalization & Bias
+As the GSS employs random sampling, finings are generalizable to the US population.The GSS is, however, an observational study(more specifically, a cross-sectional study) - with no randomized assignments/allocations to treatments - so all relationships indicate associations, but not causations as biases, confounders and random error cannot be ruled out.
+
+Changes in data collection methods over the years may have introduced bias, if the changes were systematically different across groups. As an example, it was not until 2006 that Spanish-speaking adults were included in the survey. Voluntary participaion may introduce a form of selection bias, if the participants/non-participants are systemaically different. The relatively long duration of the interview (one hour) may perhaps enhance non-response leading to a biased outcome. There is the possibility of underreporting/ misclassification bias especially if the questions are on socially-sensitive or taboo issues such as sexuality, politics, religion, smoking, drug use etc.
+
+
+
+
+```{r}
+load("C:/Users/PERSONAL/Documents/inference/gss.Rdata")
+```
+
+
+# Research Question:
+The topic we will choose to study about is the potential relationship between race & the possession of a firearm among US citizens .
+Rising  crimes such as robberies and mugging , violent attacks at the common public and shoot outs among rival gangs have been on the rise in many American cities.There have been numerous movements abolishing the sales and possessions of firearms by the  common public and only be reserved for authority & in response many people have supported the right to possess a firearm justifying it as being responsible for their own safety & relying on their own selves to act  at the event of  fatal  encounters.The findings of such a study can throw some light on what race is more likely to possess firearms & also how the distribution of guns have changed throughout the years.
+
+# Performing Exploratory Data Analysis
+First lets divide the data set based on possession of guns and race using dplyr package.Lets rename Gss to "data"
+```{r}
+data<-gss
+newdata<-subset(data,!is.na(data$owngun))
+ newdata<-newdata%>%select(race,owngun,rifle,pistol,shotgun,year)
+ newdata<-newdata[grep("Yes",newdata$owngun),]
+ nrow(newdata)
+ newdata<-newdata%>%mutate(rifle=ifelse(grepl("Yes",newdata$rifle),1,0))
+ newdata<-newdata%>%mutate(pistol=ifelse(grepl("Yes",newdata$pistol),1,0))
+ newdata<-newdata%>%mutate(shotgun=ifelse(grepl("Yes",newdata$shotgun),1,0))
+ summary(newdata)
+ sumz<-newdata%>%summarise(TR=sum(rifle),TS=sum(shotgun),TP=sum(pistol))
+ sumz
+```
+This shows that throughout the years the total number of people that claimed to own  firearm is 14000 with the proportion of white being significantly larger than other races and a sum total of 24184 guns .
+
+Now we shall continue the analysis regarding only the years 2004-2012 & see how the trend has changed .
+
+```{r echo=TRUE,results='hide'}
+new<-newdata%>%filter(year==c(2004,2006,2008,2010,2012))
+ new2004<-newdata%>%filter(year==2004)
+ sum(new2004$rifle)
+ sum(new2004$pistol)
+ sum(new2004$shotgun)
+ new2006<-newdata%>%filter(year==2006)
+ sum(new2006$rifle)
+ sum(new2006$pistol)
+ sum(new2006$shotgun)
+ new2008<-newdata%>%filter(year==2008)
+ sum(new2008$rifle)
+ sum(new2008$pistol)
+ sum(new2008$shotgun)
+ new2010<-newdata%>%filter(year==2010)
+ sum(new2010$rifle)
+ sum(new2010$pistol)
+ sum(new2010$shotgun)
+ new2012<-newdata%>%filter(year==2012)
+ sum(new2012$rifle)
+ sum(new2012$pistol)
+ sum(new2012$shotgun)
+```
+
+Based on results of above codes , we built a data frame that has the years and the quantity of guns and their types of their respective years.And from this dataframe we will construct ggplots that depict the trend of gun ownership in US.
+
+```{r}
+ 
+ Gun<-c(rep("Rifle",5),rep("Pistol",5),rep("Shotgun",5))
+ Years<-rep(c(2004,2006,2008,2010,2012),3)
+ Total<-c(174,381,276,240,260,183,400,286,239,289,167,385,277,241,276)
+ df<-data.frame(Gun,Years,Total)
+ df$Gun<-as.factor(df$Gun)
+ ggplot(df,aes(x=Years,y=Total,fill=Gun))+geom_bar(stat="identity",position="dodge")+labs(y = "No. of guns") + ggtitle("Trends of guns in US")
+ 
+```
+
+Based on the plot we can see that guns ownership was largest in 2006 and lowest in 2004
+
+Now lets look at the 2012 data specifically .
+
+```{r}
+ with(new2012,tapply(rifle,race,sum))
+ with(new2012,tapply(pistol,race,sum))
+ with(new2012,tapply(shotgun,race,sum))
+ Type<-c(rep("Rifle",3),rep("Pistol",3),rep("Shotgun",3))
+ Race<-rep(c("White","Black","Other"),3)
+ Total<-c(242,10,8,248,29,12,256,13,7)
+ DX<-data.frame(Type,Race,Total)
+ ggplot(DX,aes(Race,y=Total,fill=Type))+geom_bar(stat="identity",position="dodge")+labs(y="Total number of guns")+ggtitle("Number of guns possess by each race")
+```
+From the plot its obvious that in the year 2012, Whites own significantly more guns than the other races combined.
+
+# Statistical Inference through Hypothesis Testing.
+NULL HYPOTHESIS:There is no relation between the respondents possessing a gun and his/her racial background.
+
+ALTERNATIVE HYPOTHESIS: An individuals decision to possess a gun is dependent on his/her racial background.
+
+From the original dataset provided .all the NA values have been removed .
+As for the "refused,Don't know" cells,they have been taken as "Don't own gun".
+
+For these tests we will use the chi square independent test as we are dealing with two categorical variables with one of them having three levels.
+
+CONDITIONS:
+
+The observations are independent of each other.
+After performing exploratory data analysis,its obvious that the observations satisfy the success-failure criteria.
+
+To proceed with the analysis of data we have to determine total amount of people surveyed and between that,segregate them based on their race and if they have a gun or not .
+Finally we create a  data table from the findings .
+We have created two data objects.
+"pogo" contains all the observations that have and don't have guns & their race.
+"lolo" which is a subset of pogo such that it only contains observations that have a gun .
+
+```{r}
+
+ pogo<-subset(data,!is.na(data$owngun))
+ pogo<-pogo%>%select(race,owngun)
+ lolo<-pogo[grepl("Yes",pogo$owngun),]
+ nrow(lolo) #number of people that have a gun
+ nrow(pogo) #Total number of people 
+ WG<-lolo[grepl("White",lolo$race),]
+ nrow(WG) #white people that have gun
+ WT<-pogo[grepl("White",pogo$race),]
+ nrow(WT) #Total white people
+ nrow(WT)-nrow(WG)
+ #Similarly we can find the same for other races too.
+ 
+```
+
+We create a data frame consisting  of the observations
+```{r}
+df<-data.frame(White=c(12448,15501,27949),Black=c(1269,3625,4894),Other=c(283,1333,1616),Total=c(14000,20459,34459))
+labels<-c("Gun","No gun","Total")
+rownames(df)<-labels
+Observed<-df
+Observed
+
+```
+It was found that the overall proportion of people owning gun to the total people surveyed was 0.4062799
+Now using that value we can find the expected observations too.
+
+
+```{r}
+Expected<-data.frame(White=c(11355,16594,27949),Black=c(1988,2906,4894),Other=c(657,959,1616),Total=c(14000,20459,34459))
+ labels<-c("Guns","No Guns","Total")
+ rownames(Expected)=labels
+ Expected
+```
+
+To find  the chi square statistic we create a new function called "value" whose inputs are the observation and expected values and output is some value resultant of a mathematic operation on the inputs.
+
+```{r}
+value<-function(o,e){v=((o-e)^2)/e
+print(v)
+}
+#demo
+value(12448,11355)
+```
+
+Using the above function for all the observations and expected values.
+we get the chi square statistic as follows
+```{r}
+105.2+260.407+212.9011+71.92+177.89+145.85
+```
+
+Degrees of freedom are 2 and the test statistic is 974.16
+Finding the P value using R 
+```{r}
+pchisq(974.1681,2,lower.tail = F)
+```
+The P value is smaller than 0.05 & hence we reject the null hypothesis and adopt the alternate hypothesis stating that an individuals decision of owning a gun is not independent of his racial background .
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
